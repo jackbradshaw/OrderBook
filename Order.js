@@ -5,6 +5,7 @@ var Order = function Order(message) {
 	this.id = messageItems.shift();
 	this.size = messageItems.shift();
 	this.price = messageItems.shift();
+	this.direction = messageItems.shift();
 }
 
 exports.Order = Order;
