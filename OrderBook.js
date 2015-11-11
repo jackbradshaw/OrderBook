@@ -1,5 +1,9 @@
 var Trade = require("./Trade");
 
+var SELL_ORDER_DIRECTION = -1;
+var BUY_ORDER_DIRECTION = 1;
+var LIMIT_ORDER_TYPE = 1;
+
 var OrderBook = function OrderBook() {
 	this.buyOrders = [];
 	this.sellOrders = [];
@@ -7,38 +11,62 @@ var OrderBook = function OrderBook() {
 };
 
 OrderBook.prototype.placeOrder = function(order) {
-	console.log(this.buyOrders.slice(0,5), this.sellOrders.slice(0,5));
 	var orders;
 	var passiveOrders;
-	if(order.type === "1") {
-		if(order.direction === "-1") {
+	if(order.type === LIMIT_ORDER_TYPE) {
+		if(order.direction === SELL_ORDER_DIRECTION) {
+			orders = this.sellOrders;
+			passiveOrders = this.buyOrders;
+		} else if(order.direction === BUY_ORDER_DIRECTION){
 			orders = this.buyOrders;
 			passiveOrders = this.sellOrders;
 		} else {
-			orders = this.sellOrders;
-			passiveOrders = this.buyOrders;
+			throw new Error("Unrecognised direction: " + direction);
 		}
 
-		for(var i = passiveOrders.length - 1; i >= 0 && order.size > 0 && order.price > passiveOrders[i]; i--) {
-			this.trade(order, order, passiveOrders[i], passiveOrders);
+		if(passiveOrders) {
+			while(order.size > 0 && passiveOrders.length > 0 && this.matches(order, passiveOrders[0])) {
+				this.trade(order, passiveOrders[0]);
+				if(passiveOrders[0].size === 0) {
+					passiveOrders.shift();
+				}
+			}
 		}
 		if(order.size !== 0) {
 			orders.push(order);
-			orders.sort(function(order1, order2) {
-				return order1.price - order2.price || order1.time - order2.time;
-			})
+			orders.sort(this.sort);
 		}
 	}
 };
 
-OrderBook.prototype.trade = function(order, order, passiveOrder, passiveOrders) {
-	size = Math.min(order.price, passiveOrder.price);
+OrderBook.prototype.sort  = function(order1, order2) {
+	var result;
+	if(order1.direction === BUY_ORDER_DIRECTION) {
+		result = order2.price - order1.price;
+	} else {
+		result = order1.price - order2.price
+	}
+	return result || order1.time - order2.time;
+}
+
+OrderBook.prototype.matches = function(order1, order2) {
+	if(order1.direction === BUY_ORDER_DIRECTION) {
+		buyOrder = order1;
+		sellOrder = order2;
+	} else {
+		buyOrder = order2;
+		sellOrder = order1;
+	}
+	return buyOrder.price > sellOrder.price;
+}
+
+OrderBook.prototype.trade = function(order, passiveOrder) {
+	size = Math.min(order.size, passiveOrder.size);
 	order.size -= size;
 	passiveOrder.size -= size;
-	this.trades.push(new Trade(passiveOrder.price, size));
-	if(passiveOrder.size === 0) {
-		this.passiveOrders.pop();
-	}
+	var trade = new Trade(passiveOrder.price, size);
+	this.trades.push(trade);
+	console.log(trade);
 }
 
 module.exports = OrderBook;
