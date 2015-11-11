@@ -31,20 +31,11 @@ OrderPlacer.prototype.scheduleOrder = function(time) {
 
 OrderPlacer.prototype.timeout = function() {
 	var order = this.orders.shift();
-	if(order.type === 1) {
-		if(order.direction === 1) {
-			var direction = "buy";
-			this.highestBuy < order.price && (this.highestBuy = order.price);
-		} else {
-			var direction = "sell";
-			this.lowestSell > order.price && (this.lowestSell = order.price);
-		}
-		console.log(direction, order.price, order.size, "(lowest sell: "+ this.lowestSell + ", highest buy: " + this.highestBuy + ")");
-		order && this.orderBook.placeOrder(order);
+	if(order) {
+		this.orderBook.placeOrder(order);
+		var nextOrder = this.orders[this.orders.length - 1];
+		nextOrder && this.scheduleOrder(nextOrder.time - order.time);
 	}
-	var nextOrder = this.orders[this.orders.length - 1];
-
-	nextOrder && this.scheduleOrder(nextOrder.time - order.time);
 }
 
 module.exports = OrderPlacer;

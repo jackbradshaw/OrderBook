@@ -4,6 +4,7 @@ var Order = require("../Order");
 describe("OrderBook", function() {
 
 	var orderBook;
+	
 	beforeEach(function() {
 		orderBook = new OrderBook();
 	});

@@ -13,29 +13,28 @@ var OrderBook = function OrderBook() {
 OrderBook.prototype.placeOrder = function(order) {
 	var orders;
 	var passiveOrders;
-	if(order.type === LIMIT_ORDER_TYPE) {
-		if(order.direction === SELL_ORDER_DIRECTION) {
-			orders = this.sellOrders;
-			passiveOrders = this.buyOrders;
-		} else if(order.direction === BUY_ORDER_DIRECTION){
-			orders = this.buyOrders;
-			passiveOrders = this.sellOrders;
-		} else {
-			throw new Error("Unrecognised direction: " + direction);
-		}
+	if(order.type !== LIMIT_ORDER_TYPE) return;
+	if(order.direction === SELL_ORDER_DIRECTION) {
+		orders = this.sellOrders;
+		passiveOrders = this.buyOrders;
+	} else if(order.direction === BUY_ORDER_DIRECTION) {
+		orders = this.buyOrders;
+		passiveOrders = this.sellOrders;
+	} else {
+		throw new Error("Unrecognised direction: " + direction);
+	}
 
-		if(passiveOrders) {
-			while(order.size > 0 && passiveOrders.length > 0 && this.matches(order, passiveOrders[0])) {
-				this.trade(order, passiveOrders[0]);
-				if(passiveOrders[0].size === 0) {
-					passiveOrders.shift();
-				}
+	if(passiveOrders) {
+		while(order.size > 0 && passiveOrders.length > 0 && this.matches(order, passiveOrders[0])) {
+			this.trade(order, passiveOrders[0]);
+			if(passiveOrders[0].size === 0) {
+				passiveOrders.shift();
 			}
 		}
-		if(order.size !== 0) {
-			orders.push(order);
-			orders.sort(this.sort);
-		}
+	}
+	if(order.size !== 0) {
+		orders.push(order);
+		orders.sort(this.sort);
 	}
 };
 
